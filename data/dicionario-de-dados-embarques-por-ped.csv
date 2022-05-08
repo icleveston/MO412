@@ -1,0 +1,40 @@
+Nome_do_arquivo;Embarque_por_PED_SIU_Sublinha_aaaammdd;;
+Descricao_do_arquivo;Estimativa de embarques de passageiros de um dia útil típico do mês vigente por ponto de parada de acordo com a bilhetagem eletrônica;;
+Data_da_criacao;18/11/2020;;
+Nome_do_campo;tipo_de_dado;tamanho;descricao_do_campo
+SIU;numerico;5;Código do ponto de Parada
+LINHA;alfanumerico ;5;Linha
+SUBLINHA;numerico;2;Sublinha
+PC;numerico;1;Sentido do Itinerário. Partidas do PC1 ou PC2
+ Endereço do Ponto;alfanumerico ;90;Logradouro ao qual o ponto está localizado
+ Nº Imóvel;numerico;10;Número do imóvel ao qual o ponto está localizado em frente
+Seq;numerico;3;Número sequencial do ponto ao longo do itinerário da sublinha
+0;numerico;10;Número de usuários embarcados na faixa de 0h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+1;numerico;10;Número de usuários embarcados na faixa de 1h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+2;numerico;10;Número de usuários embarcados na faixa de 2h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+3;numerico;10;Número de usuários embarcados na faixa de 3h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+4;numerico;10;Número de usuários embarcados na faixa de 4h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+5;numerico;10;Número de usuários embarcados na faixa de 5h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+6;numerico;10;Número de usuários embarcados na faixa de 6h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+7;numerico;10;Número de usuários embarcados na faixa de 7h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+8;numerico;10;Número de usuários embarcados na faixa de 8h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+9;numerico;10;Número de usuários embarcados na faixa de 9h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+10;numerico;10;Número de usuários embarcados na faixa de 10h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+11;numerico;10;Número de usuários embarcados na faixa de 11h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+12;numerico;10;Número de usuários embarcados na faixa de 12h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+13;numerico;10;Número de usuários embarcados na faixa de 13h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+14;numerico;10;Número de usuários embarcados na faixa de 14h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+15;numerico;10;Número de usuários embarcados na faixa de 15h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+16;numerico;10;Número de usuários embarcados na faixa de 16h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+17;numerico;10;Número de usuários embarcados na faixa de 17h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+18;numerico;10;Número de usuários embarcados na faixa de 18h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+19;numerico;10;Número de usuários embarcados na faixa de 19h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+20;numerico;10;Número de usuários embarcados na faixa de 20h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+21;numerico;10;Número de usuários embarcados na faixa de 21h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+22;numerico;10;Número de usuários embarcados na faixa de 22h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+23;numerico;10;Número de usuários embarcados na faixa de 23h. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+Total geral;numerico;10;Número de usuários embarcados durante todo o dia. Obtido através da utilização da bilhetagem eletrônica e expandidos de acordo com a demanda média da linha/sublinha em toda a semana.
+Latitude WGS84;numerico;17;Latitude (PROJEÇÃO UTM DATUM WGS84)
+Longitude WGS84;numerico;17;Longitude (PROJEÇÃO UTM DATUM WGS84)
+X;numerico;8;Coordenada X (PROJEÇÃO UTM DATUM SIRGAS 2000)
+Y;numerico;9;Coordenada Y (PROJEÇÃO UTM DATUM SIRGAS 2000)
