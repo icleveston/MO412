@@ -1,6 +1,8 @@
 import networkx as nx
 import sqlite3
 
+month = '220306'
+
 conn = sqlite3.connect('data/public_transportation_bh.db')
 cursor = conn.cursor()
 
@@ -17,8 +19,8 @@ nodes_id_to_name = {v: k for k, v in nodes_name_to_id.items()}
 
 all_lines = []
 cursor.execute("""
-SELECT DISTINCT linha FROM public_transportation_bh where data = 220306
-""")
+SELECT DISTINCT linha FROM public_transportation_bh where data = ?
+""", (month,))
 for linha in cursor.fetchall():
     all_lines.append(linha[0])
    
@@ -30,24 +32,37 @@ edges = []
 for l in all_lines:
     
     cursor.execute("""
-    SELECT data, linha, seq, pc, endereco || ", " || num_rua, lat, lon FROM public_transportation_bh where seq is not null and pc=1 and linha = ? and data = 220306 order by seq;
-    """, (l,))
+    SELECT DISTINCT sublinha FROM public_transportation_bh where linha = ? and data = ?;
+    """, (l,month,))
+    sublinha = []
+    for s in cursor.fetchall():
+        sublinha.append(s[0])
+        
+    for sl in sublinha:
     
-    print(f"\n\nLinha: {l}")
-
-    node_id_past = None
-    for linha in cursor.fetchall():
-        node_id = nodes_name_to_id[linha[4]]
-        nodes.append((node_id, str(l), linha[5], linha[6]))
+        cursor.execute("""
+        SELECT data, linha, sublinha, seq, pc, endereco || ", " || num_rua, lat, lon FROM public_transportation_bh where linha = ? and sublinha = ? and pc=1 and data = ? order by seq;
+        """, (l,sl,month,))
         
-        print(linha)
+        print(f"\n\nLinha: {l} - Sublinha: {sl}")
 
-        if node_id_past is None:
+        node_id_past = None
+        for linha in cursor.fetchall():
+            node_id = nodes_name_to_id[linha[5]]
+            
+            lat = linha[6]
+            lon = linha[7]
+            
+            nodes.append((node_id, str(l), lat, lon))
+            
+            print(linha)
+
+            if node_id_past is None:
+                node_id_past = node_id
+                continue
+            
+            edges.append((node_id_past, node_id))
             node_id_past = node_id
-            continue
-        
-        edges.append((node_id_past, node_id))
-        node_id_past = node_id
     
 conn.close()
 
