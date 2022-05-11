@@ -17,7 +17,7 @@ nodes_id_to_name = {v: k for k, v in nodes_name_to_id.items()}
 
 all_lines = []
 cursor.execute("""
-SELECT DISTINCT linha FROM public_transportation_bh where data = 220306 
+SELECT DISTINCT linha FROM public_transportation_bh where data = 220306
 """)
 for linha in cursor.fetchall():
     all_lines.append(linha[0])
@@ -30,15 +30,15 @@ edges = []
 for l in all_lines:
     
     cursor.execute("""
-    SELECT data, linha, seq, endereco || ", " || num_rua, lat, lon FROM public_transportation_bh where seq is not null and linha = ? and data = 220306 order by seq;
+    SELECT data, linha, seq, pc, endereco || ", " || num_rua, lat, lon FROM public_transportation_bh where seq is not null and pc=1 and linha = ? and data = 220306 order by seq;
     """, (l,))
     
     print(f"\n\nLinha: {l}")
 
     node_id_past = None
     for linha in cursor.fetchall():
-        node_id = nodes_name_to_id[linha[3]]
-        nodes.append((node_id, str(l), linha[4], linha[5]))
+        node_id = nodes_name_to_id[linha[4]]
+        nodes.append((node_id, str(l), linha[5], linha[6]))
         
         print(linha)
 
