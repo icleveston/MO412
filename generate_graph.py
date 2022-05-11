@@ -17,7 +17,7 @@ nodes_id_to_name = {v: k for k, v in nodes_name_to_id.items()}
 
 all_lines = []
 cursor.execute("""
-SELECT DISTINCT linha FROM public_transportation_bh where data = 220306
+SELECT DISTINCT linha FROM public_transportation_bh where data = 220306 
 """)
 for linha in cursor.fetchall():
     all_lines.append(linha[0])
@@ -30,7 +30,7 @@ edges = []
 for l in all_lines:
     
     cursor.execute("""
-    SELECT data, linha, seq, endereco || ", " || num_rua FROM public_transportation_bh where seq is not null and linha = ? and data = 220306 order by seq;
+    SELECT data, linha, seq, endereco || ", " || num_rua, lat, lon FROM public_transportation_bh where seq is not null and linha = ? and data = 220306 order by seq;
     """, (l,))
     
     print(f"\n\nLinha: {l}")
@@ -38,7 +38,7 @@ for l in all_lines:
     node_id_past = None
     for linha in cursor.fetchall():
         node_id = nodes_name_to_id[linha[3]]
-        nodes.append((node_id, str(l)))
+        nodes.append((node_id, str(l), linha[4], linha[5]))
         
         print(linha)
 
@@ -59,15 +59,17 @@ print(f"Total Edges; {len(edges)}")
 G.add_nodes_from([x[0] for x in nodes])
 G.add_edges_from(edges)
 
-for node, linha in nodes:
+for node, linha, lat, lon in nodes:
 
     G.nodes[node]['all_linha'] = linha
+    G.nodes[node]['lat'] = lat
+    G.nodes[node]['lon'] = lon
     
 for l in all_lines:
     for node in G.nodes:
         G.nodes[node][str(l)] = False
     
-for node, linha in nodes:
+for node, linha, _, _ in nodes:
     G.nodes[node][linha] = True
 
 # Relabel the nodes
