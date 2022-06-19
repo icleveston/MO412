@@ -3,7 +3,7 @@ import sqlite3
 
 month = '220306'
 
-conn = sqlite3.connect('data/public_transportation_bh.db')
+conn = sqlite3.connect('../data/public_transportation_bh.db')
 cursor = conn.cursor()
 
 cursor.execute("""
@@ -91,5 +91,5 @@ for node, linha, _, _ in nodes:
 G = nx.relabel_nodes(G, nodes_id_to_name)
 
 # Export graph
-nx.write_gexf(G, "graph.gexf")
+nx.write_gexf(G, "../graph.gexf")
 
