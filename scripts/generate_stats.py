@@ -5,6 +5,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 from libpysal.cg import voronoi_frames
 
+import contextily as cx
+import cartopy.crs as ccrs
+from cartopy.io.img_tiles import OSM
+
 
 def degree_analysis(graph):
 
@@ -132,7 +136,12 @@ def connected_components_analysis(graph):
     for n in graph.nodes(data=True):
         node_color.append(n[1]['color'])
 
-    plt.figure(figsize=(14, 10), dpi=300)
+    fig = plt.figure(figsize=(14, 10), dpi=300)
+    ax = fig.add_subplot(1, 1, 1, projection=imagery.crs)
+    imagery = OSM()
+    ax.set_extent([-0.14, -0.1, 51.495, 51.515], ccrs.PlateCarree())
+    ax.add_image(imagery, 14)
+
     nx.draw(graph, pos, node_size=5, node_color=node_color, arrowsize=3, vmin=1, vmax=6, edge_color='#ccc',
             cmap=plt.cm.Set1)
     # plt.gca().invert_yaxis()
@@ -282,13 +291,13 @@ zero_degree_nodes = [n for n, d in G.degree if d == 0]
 G.remove_nodes_from(zero_degree_nodes)
 
 
-#plot(G)
-#degree_analysis(G)
-connected_components_analysis(G)
-#bridge_analysis(G)
-#spanning_tree(G)
-#voronoi_cells(G)
-#betweeness_centrality(G)
+plot(G)
+degree_analysis(G)
+# connected_components_analysis(G)
+# bridge_analysis(G)
+# spanning_tree(G)
+# voronoi_cells(G)
+# betweeness_centrality(G)
 
 print(f"Average Clustering Coefficient: {nx.average_clustering(G)}")
 print(f"Degree Assortativity Coefficient: {nx.degree_assortativity_coefficient(G)}")
@@ -296,8 +305,3 @@ print(f"Degree Assortativity Coefficient: {nx.degree_assortativity_coefficient(G
 # Summarization
 # G_summarized, _ = nx.dedensify(G, threshold=2)
 # print(f"{G_summarized}")
-
-
-
-
-

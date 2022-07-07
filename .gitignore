@@ -1,1 +1,6 @@
 data/public_transportation_bh.db
+scripts/.ipynb_checkpoints
+public_transportation_bh.db
+scripts/cache
+.idea
+.ipynb_checkpoints
