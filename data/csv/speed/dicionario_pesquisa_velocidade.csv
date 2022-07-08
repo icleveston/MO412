@@ -1,0 +1,11 @@
+Nome_do_arquivo;Velocidade_nos_corredores;
+Descricao_do_arquivo;Arquivo com as coordenadas coletadas durante pesquisa para aferição da velociade nos corredores, a cada segundo, com informação de data e horao;
+Data_da_criacao;16/12/2020;
+Nome_do_campo;tipo_de_dado;descricao_do_campo
+ID;numerico;Identificador de cada ponto capturado pelo GPS
+Código;alfanumerico ;Código do corredor pesquisado
+Via;alfanumerico ;Nome do corredor peasquisado
+Sentido;alfanumerico ;Identificação do sentido de coleta dos pontos (C/B - Sentido Centro/ Bairro_ B/C - Sentido Bairro/Centro_Antiorario - Sentido Antiorário_Sentido Horário - Sentido Horário_LO - Sentido Leste/Oeste_OL - Sentido Oeste/Leste - ES/BH - Sentido Espirito Santo/Belo Horizonte_BH/ES - Sentido Belo Horizonte/Espirito Santo
+Horário;data/hora;Data e Hora da captura do ponto
+Latitude;numerico;Coordenada Latitude do endereço da interseção (EPSG:4326 -WGS 84 -Geográfico)
+Longitude;numerico;Coordenada Longitude do endereço da interseção (EPSG:4326 -WGS 84-Geográfico)
