@@ -1,9 +1,12 @@
 import networkx as nx
 from networkx.algorithms import *
 import numpy as np
+from scipy.special import factorial
 import matplotlib
 import matplotlib.pyplot as plt
 from libpysal.cg import voronoi_frames
+import geopy.distance
+import powerlaw
 
 
 def degree_analysis(graph):
@@ -14,13 +17,25 @@ def degree_analysis(graph):
     in_degree_sequence = sorted((d for n, d in graph.in_degree()), reverse=True)
     out_degree_sequence = sorted((d for n, d in graph.out_degree()), reverse=True)
 
+    largest_hub = sorted([{'node':n, 'degree':d} for n, d in graph.out_degree()], reverse=True, key=lambda x:x['degree'])
+    print(f"Largest Hub: {largest_hub[0]}")
+
     k_in, t_in = np.unique(in_degree_sequence, return_counts=True)
     k_out, t_out = np.unique(out_degree_sequence, return_counts=True)
     N_in, N_out = np.sum(t_in), np.sum(t_out)
     p_k_in, p_k_out = t_in/N_in, t_out/N_out
 
-    print(f"Average Incoming Degree: {np.sum(k_in*p_k_in)}")
-    print(f"Average Outgoing Degree: {np.sum(k_out*p_k_out)}")
+    average_k_in = np.sum(k_in*p_k_in)
+    average_k_out = np.sum(k_out*p_k_out)
+
+    average_k_in_squared = np.sum((k_in**2)*p_k_in)
+
+    print(f"Average Incoming Degree: {average_k_in}")
+    print(f"Average Outgoing Degree: {average_k_out}")
+    print(f"Squared Incoming Degree: {average_k_in_squared}")
+
+    pmf_in = np.exp(-average_k_in) * np.power(average_k_in, k_in) / factorial(k_in)
+    pmf_out = np.exp(-average_k_out) * np.power(average_k_out, k_out) / factorial(k_out)
 
     fig = plt.figure("Degree Analysis", figsize=(8, 8))
 
@@ -38,6 +53,7 @@ def degree_analysis(graph):
 
     ax2 = fig.add_subplot(axgrid[0, 1])
     ax2.scatter(k_in, p_k_in, s=100)
+    ax2.plot(k_in, pmf_in, 'g')
     ax2.set_xlabel("k_in")
     ax2.set_ylabel("degree distribution")
     ax2.set_yscale('log')
@@ -59,6 +75,7 @@ def degree_analysis(graph):
 
     ax4 = fig.add_subplot(axgrid[1, 1])
     ax4.scatter(k_out, p_k_out, s=100)
+    ax4.plot(k_out, pmf_out, 'g')
     ax4.set_xlabel("k_out")
     ax4.set_ylabel("degree distribution")
     ax4.set_yscale('log')
@@ -73,6 +90,51 @@ def degree_analysis(graph):
     plt.show()
 
     _plot_map_degree(graph)
+
+
+def scale_free_analysis(graph):
+
+    in_degree_sequence = sorted((d for n, d in graph.in_degree()), reverse=True)
+    out_degree_sequence = sorted((d for n, d in graph.out_degree()), reverse=True)
+
+    fit_in = powerlaw.Fit(in_degree_sequence, xmin=1, discrete=True, estimate_discrete=True)
+    fit_out = powerlaw.Fit(out_degree_sequence, xmin=1, discrete=True, estimate_discrete=True)
+
+    print(fit_in.power_law.alpha)
+    print(fit_out.power_law.alpha)
+    print(fit_in.lognormal.mu)
+    print(fit_in.lognormal.sigma)
+
+    R, p = fit_in.distribution_compare('lognormal', 'power_law', normalized_ratio=True)
+    print(R, p)
+
+    fig = plt.figure("Scale-free Analysis", figsize=(12, 8))
+
+    axgrid = fig.add_gridspec(1, 2)
+
+    ax1 = fig.add_subplot(axgrid[0, 0])
+    fit_in.plot_pdf(color='b', linewidth=2, ax=ax1)
+    fit_in.power_law.plot_pdf(color='g', linewidth=2, linestyle='--', ax=ax1)
+    fit_in.lognormal.plot_pdf(color='y', linewidth=2, linestyle='--', ax=ax1)
+    fit_in.exponential.plot_pdf(color='r', linewidth=2, linestyle='--', ax=ax1)
+    ax1.set_xlabel("k_in")
+    ax1.set_ylabel("degree distribution")
+    plt.ylim([0.0000001, 10])
+    plt.grid()
+
+    ax2 = fig.add_subplot(axgrid[0, 1])
+    fit_out.plot_pdf(color='b', linewidth=2, ax=ax2)
+    fit_out.power_law.plot_pdf(color='g', linewidth=2, linestyle='--', ax=ax2)
+    fit_out.lognormal.plot_pdf(color='y', linewidth=2, linestyle='--', ax=ax2)
+    fit_out.exponential.plot_pdf(color='r', linewidth=2, linestyle='--', ax=ax2)
+    ax2.set_xlabel("k_out")
+    ax2.set_ylabel("degree distribution")
+    plt.ylim([0.0000001, 10])
+    plt.grid()
+
+    fig.tight_layout()
+    plt.savefig('scale_free_analysis.png')
+    plt.show()
 
 
 def _plot_map_degree(graph):
@@ -109,14 +171,17 @@ def connected_components_analysis(graph):
     print(f"Is Strongly Connected: {nx.is_strongly_connected(graph)}")
     print(f"Is Weakly Connected: {nx.is_weakly_connected(graph)}")
 
-    strongly_connected_components = list(sorted(nx.strongly_connected_components(graph), key=len, reverse=True))
+    strongly_connected_components = sorted(nx.strongly_connected_components(graph), key=len, reverse=True)
 
-    #strongly_connected_components = [c for c in strongly_connected_components if len(c) > 1]
+    strongly_connected_components = [c for c in strongly_connected_components if len(c) > 1]
 
     S = [G.subgraph(c).copy() for c in strongly_connected_components]
 
     print(f"Components Size: {[len(c) for c in S]}")
     print(f"Diameter of Largest Component: {nx.diameter(S[0])}")
+    print(f"Average Shortest Path Length: {nx.average_shortest_path_length(S[0])}")
+    print(f"Average Clustering Coefficient: {nx.average_clustering(graph)}")
+    print(f"Cycles: {len(nx.find_cycle(graph, orientation='original'))}")
 
     colors = list(range(len(strongly_connected_components)))
     color_id = 0
@@ -130,7 +195,7 @@ def connected_components_analysis(graph):
 
     node_color = []
     for n in graph.nodes(data=True):
-        node_color.append(n[1]['color'])
+        node_color.append(n[1]['color'] if 'color' in n[1] else 0)
 
     plt.figure(figsize=(14, 10), dpi=300)
     nx.draw(graph, pos, node_size=5, node_color=node_color, arrowsize=3, vmin=1, vmax=6, edge_color='#ccc',
@@ -139,35 +204,158 @@ def connected_components_analysis(graph):
     plt.gca().invert_xaxis()
     plt.tight_layout()
     plt.axis("off")
+    plt.savefig('map_connected_components.png')
     plt.show()
 
-    _plot_map_connected(graph)
 
+def robustness_analysis(graph, type='plot'):
 
-def _plot_map_connected(graph):
+    def remove_random_node(g, n):
+        import random
+        for i in range(n):
+            node = random.choice(list(g.nodes.keys()))
+            g.remove_node(node)
+
+    def remove_highest_degree_node(g, n):
+        import random
+        for i in range(n):
+            node = sorted([{'node': n, 'degree': d} for n, d in graph.degree()], reverse=True,
+                                 key=lambda x: x['degree'])
+            g.remove_node(node[0]['node'])
+
+    def generate_voronoi(id, cells, norm_inv):
+
+        fig = plt.figure(figsize=(10, 6), dpi=100)
+        ax = fig.add_subplot(111)
+        m = cells.plot(cmap=plt.cm.Spectral_r, column='area_inv', edgecolor='white', linewidth=0, ax=ax, norm=norm_inv)
+
+        plt.gca().invert_xaxis()
+        plt.tight_layout()
+        plt.axis("off")
+        plt.savefig(f"robustness/map_voronoi_{id}.png", transparent=True)
+        #plt.show()
+
     graph = graph.to_undirected()
-    graph_coloring = coloring.greedy_color(graph, strategy='connected_sequential_bfs')
+    lat = []
+    lon = []
+    nodes = []
+    for n in graph.nodes(data=True):
+        lat.append(n[1]['lat'])
+        lon.append(n[1]['lon'])
+        nodes.append(n[0])
 
-    for key, value in graph_coloring.items():
-        graph.nodes[key]['color'] = value
+    coordinates = np.column_stack((lat, lon))
+    cells, points = voronoi_frames(coordinates, clip="convex hull")
+    cells["area"] = cells['geometry'].area
+    cells["area_inv"] = 1 / cells["area"]
+    cells["node"] = nodes
+    norm_inv = matplotlib.colors.LogNorm(vmin=cells["area_inv"].min(), vmax=cells["area_inv"].max())
+    id = 0
 
-    H = nx.Graph()
-    H.add_nodes_from(sorted(graph.nodes(data=True), key=lambda x: x[1]['color']))
-    H.add_edges_from(graph.edges(data=True))
+    if type == 'random':
 
-    pos = {n[0]: (n[1]['lat'], n[1]['lon']) for n in H.nodes(data=True)}
-    colors_raw = [n[1]['color']+1 for n in H.nodes(data=True)]
+        in_degree_sequence = sorted((d for n, d in graph.degree()), reverse=True)
 
-    colors = list(map(lambda x: x/max(colors_raw), colors_raw))
+        k_in, t_in = np.unique(in_degree_sequence, return_counts=True)
+        N_in = np.sum(t_in)
+        p_k_in = t_in/N_in
 
-    plt.figure(figsize=(14, 10), dpi=300)
-    nx.draw(H, pos, node_size=list(map(lambda x: x**3, colors_raw)), edge_color='#ddd', node_color=colors,
-            arrowsize=1, cmap=plt.cm.GnBu)
-    # plt.gca().invert_yaxis()
-    plt.gca().invert_xaxis()
-    plt.tight_layout()
-    plt.axis("off")
-    plt.show()
+        average_k_in = np.sum(k_in*p_k_in)
+
+        average_k_in_squared = np.sum((k_in**2)*p_k_in)
+        molloy_reed = average_k_in_squared/average_k_in
+
+        print(f"Average Degree: {average_k_in}")
+        print(f"Molloy-Reed Criterion: {molloy_reed}")
+        print(f"f_c: {1-(1/(molloy_reed - 1))}")
+        print(f"f_c_ER: {1-(1/average_k_in)}")
+
+        strongly_connected_components = sorted(nx.connected_components(graph), key=len, reverse=True)
+        graph = G.subgraph(strongly_connected_components[0]).copy().to_undirected()
+
+        graph_len = len(graph)
+        print(f"{0} - Components Size: {graph_len}")
+        stats = [(0, len(graph))]
+
+        for i in range(graph_len):
+            if graph_len > 1:
+                remove_random_node(graph, 1)
+                components = sorted(nx.connected_components(graph), key=len, reverse=True)
+                graph = graph.subgraph(components[0]).to_undirected()
+                graph_len = len(graph)
+
+                cells['area_inv'] = cells['area_inv'].mask(~cells['node'].isin(list(components[0])), 0.1)
+
+                generate_voronoi(id, cells, norm_inv)
+                id += 1
+
+            print(f"{i+1} - Components Size: {graph_len}")
+            stats.append((i+1, graph_len))
+
+        stats = np.asarray(stats)
+
+        with open('robustness_random.npy', 'wb') as f:
+            np.save(f, stats)
+
+    elif type == 'attack':
+
+        strongly_connected_components = sorted(nx.connected_components(graph), key=len, reverse=True)
+        graph = G.subgraph(strongly_connected_components[0]).copy().to_undirected()
+
+        graph_len = len(graph)
+        print(f"{0} - Components Size: {graph_len}")
+        stats = [(0, len(graph))]
+
+        for i in range(graph_len):
+            if graph_len > 1:
+                remove_highest_degree_node(graph, 1)
+                components = sorted(nx.connected_components(graph), key=len, reverse=True)
+                graph = graph.subgraph(components[0]).to_undirected()
+                graph_len = len(graph)
+
+                cells['area_inv'] = cells['area_inv'].mask(~cells['node'].isin(list(components[0])), 0.1)
+
+                generate_voronoi(id, cells, norm_inv)
+                id += 1
+
+            print(f"{i + 1} - Components Size: {graph_len}")
+            stats.append((i + 1, graph_len))
+
+        stats = np.asarray(stats)
+
+        with open('robustness_attack.npy', 'wb') as f:
+            np.save(f, stats)
+
+    elif type == 'plot':
+
+        stats_random = np.load('robustness_random.npy')
+        print(len(stats_random[:,1][stats_random[:,1] > 1]))
+        stats_random = stats_random/len(stats_random[:,0])
+
+        stats_attack = np.load('robustness_attack.npy')
+        n_hubs_attack = len(stats_attack[:, 1][stats_attack[:, 1] > 1])
+        print(n_hubs_attack)
+        stats_attack = stats_attack / len(stats_attack[:, 0])
+
+        for i in range(n_hubs_attack):
+            fig = plt.figure("Robustness Analysis", figsize=(10, 8))
+            axgrid = fig.add_gridspec(1, 1)
+            ax1 = fig.add_subplot(axgrid[0, 0])
+            ax1.plot(stats_random[:,0], stats_random[:,1], 'g')
+            ax1.plot(stats_attack[:,0], stats_attack[:,1], 'r')
+            ax1.scatter(stats_attack[i,0], stats_attack[i,1], c='r', s=100)
+            ax1.set_xlabel("f")
+            ax1.set_ylabel("p")
+
+            plt.xlim([0, 1])
+            plt.ylim([0, 1])
+            plt.xticks(np.arange(min(stats_random[:,0]), max(stats_random[:,0])+0.05, .05))
+            plt.yticks(np.arange(min(stats_random[:,0]), max(stats_random[:,0])+0.05, .05))
+
+            fig.tight_layout()
+            plt.grid()
+            plt.savefig(f"robustness/robustness_analysis_{i}.png")
+            plt.show()
 
 
 def bridge_analysis(graph):
@@ -195,14 +383,17 @@ def bridge_analysis(graph):
 
 
 def spanning_tree(graph):
-    graph_undirected = graph.to_undirected()
 
-    tree_graph = nx.minimum_spanning_tree(graph_undirected)
+    e = nx.tree.Edmonds(graph)
+    e.find_optimum()
 
-    pos = {n[0]: (n[1]['lat'], n[1]['lon']) for n in tree_graph.nodes(data=True)}
+    tree_graph = nx.tree.greedy_branching(graph, kind='min')
+    print(f"Links: {len(tree_graph.edges)}")
+
+    pos = {n[0]: (n[1]['lat'], n[1]['lon']) for n in graph.nodes(data=True)}
 
     plt.figure(figsize=(14, 10), dpi=300)
-    nx.draw(tree_graph, pos, node_size=3, node_color="b", arrowsize=3, edge_color='#ccc')
+    nx.draw(tree_graph, pos, node_size=3, node_color="b", arrowsize=3, edge_color='red')
     # plt.gca().invert_yaxis()
     plt.gca().invert_xaxis()
     plt.tight_layout()
@@ -210,7 +401,7 @@ def spanning_tree(graph):
     plt.show()
 
 
-def voronoi_cells(graph):
+def distance_evenly_distributed_analysis(graph):
 
     lat = []
     lon = []
@@ -220,25 +411,86 @@ def voronoi_cells(graph):
 
     coordinates = np.column_stack((lat, lon))
     cells, _ = voronoi_frames(coordinates, clip="convex hull")
-    cells["area"] = 1/cells['geometry'].area
+    cells["area"] = cells['geometry'].area
+    cells["area_inv"] = 1/cells["area"]
 
+    norm_inv = matplotlib.colors.LogNorm(vmin=cells["area_inv"].min(), vmax=cells["area_inv"].max())
     norm = matplotlib.colors.LogNorm(vmin=cells["area"].min(), vmax=cells["area"].max())
 
     fig = plt.figure(figsize=(14, 10), dpi=300)
     ax = fig.add_subplot(111)
-    cells.plot(cmap=plt.cm.Spectral_r, column='area', edgecolor='white', linewidth=1, ax=ax, norm=norm)
+    m = cells.plot(cmap=plt.cm.Spectral_r, column='area_inv', edgecolor='white', linewidth=0, ax=ax, norm=norm_inv)
+
     plt.gca().invert_xaxis()
     plt.tight_layout()
     plt.axis("off")
+    plt.savefig('map_voronoi.png')
+    plt.show()
+
+    attrs = {(x[0], x[1]): {'distance': 0} for x in graph.edges}
+    all_distances = []
+    # Compute distances
+    for e in graph.edges(data=True):
+        n1 = graph.nodes[e[0]]
+        n2 = graph.nodes[e[1]]
+        coords_1 = (n1['lat'], n1['lon'])
+        coords_2 = (n2['lat'], n2['lon'])
+
+        d = geopy.distance.geodesic(coords_1, coords_2).meters
+        all_distances.append(d)
+
+        attrs[(e[0], e[1])]['distance'] = d
+
+    nx.set_edge_attributes(graph, attrs)
+
+    # Round and sort
+    all_distances = set(map(lambda x: round(x, 3), all_distances))
+    all_distances = sorted(all_distances, reverse=True)
+
+    print(f"Mean: {np.asarray(all_distances).mean()}")
+    print(f"Median: {np.median(all_distances)}")
+    print(f"Std: {np.asarray(all_distances).std()}")
+
+    fig = plt.figure("Weight Analysis", figsize=(8, 8))
+
+    axgrid = fig.add_gridspec(1, 1)
+
+    ax1 = fig.add_subplot(axgrid[0, 0])
+    ax1.hist(all_distances, bins=1000)
+    ax1.set_xlabel("distance (m)")
+    ax1.set_ylabel("number of links")
+    ax1.set_xscale('log')
+    ax1.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax1.set_xticks([10, 30, 50, 100, 200, 300, 500, 1000, 2500, 5000, 10000])
+    plt.yticks(np.arange(0, 180, 10))
+
+    fig.tight_layout()
+    plt.grid()
+    plt.savefig('weight_analysis.png')
     plt.show()
 
 
 def betweeness_centrality(graph):
-    graph = graph.to_undirected()
+    #graph = graph.to_undirected()
 
-    centrality = nx.betweenness_centrality(graph, endpoints=True, seed=1)
+    attrs = {(x[0], x[1]): {'distance': 0} for x in graph.edges}
+    # Compute distances
+    for e in graph.edges(data=True):
+        n1 = graph.nodes[e[0]]
+        n2 = graph.nodes[e[1]]
+        coords_1 = (n1['lat'], n1['lon'])
+        coords_2 = (n2['lat'], n2['lon'])
 
-    lpc = nx.community.label_propagation_communities(graph)
+        d = geopy.distance.geodesic(coords_1, coords_2).meters
+
+        attrs[(e[0], e[1])]['distance'] = d
+
+    nx.set_edge_attributes(graph, attrs)
+
+    centrality = nx.betweenness_centrality(graph, weight='distance', endpoints=False, seed=1)
+
+    lpc = nx.community.asyn_lpa_communities(graph, weight='distance', seed=1)
+
     community_index = {n: i for i, com in enumerate(lpc) for n in com}
 
     fig, ax = plt.subplots(figsize=(14, 10))
@@ -259,6 +511,7 @@ def betweeness_centrality(graph):
     plt.gca().invert_xaxis()
     fig.tight_layout()
     plt.axis("off")
+    plt.savefig('communities.png')
     plt.show()
 
 
@@ -281,23 +534,16 @@ G = nx.read_gexf('../graph.gexf')
 zero_degree_nodes = [n for n, d in G.degree if d == 0]
 G.remove_nodes_from(zero_degree_nodes)
 
-
 #plot(G)
 #degree_analysis(G)
-connected_components_analysis(G)
+#scale_free_analysis(G)
+#connected_components_analysis(G)
+#distance_evenly_distributed_analysis(G)
+robustness_analysis(G)
+
 #bridge_analysis(G)
-#spanning_tree(G)
-#voronoi_cells(G)
 #betweeness_centrality(G)
+#spanning_tree(G)
 
-print(f"Average Clustering Coefficient: {nx.average_clustering(G)}")
-print(f"Degree Assortativity Coefficient: {nx.degree_assortativity_coefficient(G)}")
-
-# Summarization
-# G_summarized, _ = nx.dedensify(G, threshold=2)
-# print(f"{G_summarized}")
-
-
-
-
+#print(f"Degree Assortativity Coefficient: {nx.degree_assortativity_coefficient(G)}")
 
