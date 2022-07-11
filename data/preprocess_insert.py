@@ -9,16 +9,18 @@ conn = sqlite3.connect('public_transportation_bh.db')
 cursor = conn.cursor()
 
 total_rows = 0
+path_dir = 'csv'
 # print(os.listdir('data/csv'))
 # Read files
-for filename in os.listdir('data/csv'):
+#data/csv
+for filename in [f for f in os.listdir(path_dir) if os.path.isfile(os.path.join(path_dir, f))]:
 
     lista = []
 
     # Get file data
     data = filename[32:-4]
 
-    with open(os.path.join('data/csv', filename), encoding='latin-1') as csvfile:
+    with open(os.path.join(path_dir, filename), encoding='latin-1') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=";")
         next(spamreader)
 

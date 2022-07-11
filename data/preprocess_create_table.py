@@ -11,6 +11,7 @@ cursor.execute("""
 CREATE TABLE public_transportation_bh (        
         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         data DATE NOT NULL,
+        weekend INTEGER (1),
         siu INTEGER NOT NULL,
         linha  INTEGER NOT NULL,
         sublinha INTEGER NOT NULL,
