@@ -1,12 +1,14 @@
 import networkx as nx
 from networkx.algorithms import *
 import numpy as np
+import scipy
 from scipy.special import factorial
 import matplotlib
 import matplotlib.pyplot as plt
 from libpysal.cg import voronoi_frames
 import geopy.distance
 import powerlaw
+import pandas as pd
 
 
 def degree_analysis(graph):
@@ -208,7 +210,7 @@ def connected_components_analysis(graph):
     plt.show()
 
 
-def robustness_analysis(graph, type='plot'):
+def robustness_analysis(graph, type='attack'):
 
     def remove_random_node(g, n):
         import random
@@ -219,7 +221,7 @@ def robustness_analysis(graph, type='plot'):
     def remove_highest_degree_node(g, n):
         import random
         for i in range(n):
-            node = sorted([{'node': n, 'degree': d} for n, d in graph.degree()], reverse=True,
+            node = sorted([{'node': n, 'degree': d} for n, d in g.degree()], reverse=True,
                                  key=lambda x: x['degree'])
             g.remove_node(node[0]['node'])
 
@@ -271,7 +273,7 @@ def robustness_analysis(graph, type='plot'):
         print(f"f_c_ER: {1-(1/average_k_in)}")
 
         strongly_connected_components = sorted(nx.connected_components(graph), key=len, reverse=True)
-        graph = G.subgraph(strongly_connected_components[0]).copy().to_undirected()
+        graph = graph.subgraph(strongly_connected_components[0]).copy().to_undirected()
 
         graph_len = len(graph)
         print(f"{0} - Components Size: {graph_len}")
@@ -300,7 +302,7 @@ def robustness_analysis(graph, type='plot'):
     elif type == 'attack':
 
         strongly_connected_components = sorted(nx.connected_components(graph), key=len, reverse=True)
-        graph = G.subgraph(strongly_connected_components[0]).copy().to_undirected()
+        graph = graph.subgraph(strongly_connected_components[0]).copy().to_undirected()
 
         graph_len = len(graph)
         print(f"{0} - Components Size: {graph_len}")
@@ -528,6 +530,85 @@ def plot(graph):
     plt.show()
 
 
+def inneficiency_analysis():
+    df = pd.read_csv('../data/tempo_real_convencional_csv_080722101517.csv', delimiter=';')
+
+    lines = df[['NL', 'VL']]
+    lines = lines[lines['VL'] > 2]
+
+    d = df[['LT', 'LG', 'VL']]
+    d = d[d['VL'] > 1]
+
+    print(d['VL'].mean())
+    print(d['VL'].median())
+    print(d['VL'].std())
+
+    coordinates = d[['LT', 'LG']].to_numpy(dtype=float)
+    color = d['VL'].to_numpy(dtype=float)
+
+    fig = plt.figure("inneficiency_analysis", figsize=(14, 10), dpi=300)
+    axgrid = fig.add_gridspec(1, 1)
+    ax1 = fig.add_subplot(axgrid[0, 0])
+    ax1.scatter(coordinates[:,0], coordinates[:,1], cmap=plt.cm.Spectral, c=color)
+    plt.gca().invert_xaxis()
+    plt.axis("off")
+    plt.savefig('inefficiency.png')
+    plt.show()
+
+    # cells, _ = voronoi_frames(coordinates, clip="convex hull")
+    # cells["color"] = 1/color
+    #
+    # norm_inv = matplotlib.colors.LogNorm(vmin=cells["color"].min(), vmax=cells["color"].max())
+    #
+    # fig = plt.figure(figsize=(14, 10), dpi=300)
+    # ax = fig.add_subplot(111)
+    #m = cells.plot(cmap=plt.cm.Spectral_r, column='color', edgecolor='white', linewidth=0, ax=ax,
+    #                norm=norm_inv)
+    #
+    # plt.gca().invert_xaxis()
+    # plt.tight_layout()
+    # plt.axis("off")
+    # plt.savefig('map_voronoi.png')
+    # plt.show()
+
+    # f = scipy.interpolate.interp2d(coordinates[:,0], coordinates[:,1], color)
+    # xnew = np.arange(min(coordinates[:,0]), max(coordinates[:,0]), 0.001)
+    # ynew = np.arange(min(coordinates[:,1]), max(coordinates[:,1]), 0.001)
+    # print(xnew)
+    # znew = f(xnew,  ynew)
+
+    h, _, _ = np.histogram2d(coordinates[:,0], coordinates[:,1], bins=1000, weights=color)
+    print(np.shape(h))
+
+    fig = plt.figure("Degree Analysis", figsize=(10, 8))
+    axgrid = fig.add_gridspec(1, 1)
+    ax1 = fig.add_subplot(axgrid[0, 0])
+    ax1.imshow(h.T, interpolation='gaussian', cmap=plt.cm.Spectral_r) #
+    plt.show()
+
+    exit()
+
+    vl = lines['VL'].sort_values(ascending=False).to_numpy()
+    k_in, t_in = np.unique(vl, return_counts=True)
+
+    fig = plt.figure("Degree Analysis", figsize=(10, 8))
+    axgrid = fig.add_gridspec(1, 1)
+
+    ax1 = fig.add_subplot(axgrid[0, 0])
+    ax1.bar(k_in, t_in)
+    ax1.set_xlabel("average speed (km/h)")
+    ax1.set_ylabel("number of lanes")
+    plt.grid()
+    # plt.xlim([-0.5, max(in_degree_sequence)])
+    # plt.ylim([0, 1])
+    plt.xticks(np.arange(min(vl), max(vl) + 1, 3))
+    plt.yticks(np.arange(0, 30, 3))
+
+    plt.tight_layout()
+    plt.savefig('speed.png')
+    plt.show()
+
+
 G = nx.read_gexf('../graph.gexf')
 
 # Remove zero degree nodes
@@ -539,11 +620,13 @@ G.remove_nodes_from(zero_degree_nodes)
 #scale_free_analysis(G)
 #connected_components_analysis(G)
 #distance_evenly_distributed_analysis(G)
-robustness_analysis(G)
+#robustness_analysis(G)
+inneficiency_analysis()
 
 #bridge_analysis(G)
 #betweeness_centrality(G)
 #spanning_tree(G)
 
 #print(f"Degree Assortativity Coefficient: {nx.degree_assortativity_coefficient(G)}")
+
 
